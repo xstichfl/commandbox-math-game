@@ -7,9 +7,6 @@ component accessors="true" {
 	property name="score" type="numeric" default=0;
 	property name="numQuestions" type="numeric" default=0;
 
-	/**
-	* 
-	*/
 	public function run(numeric numQuestions = 10) {
 
 		setNumQuestions(arguments.numQuestions);
@@ -20,7 +17,7 @@ component accessors="true" {
 		print.line("Press any key to start").toConsole();
 		waitForKey();
 		for (local.questionNumber = 1; local.questionNumber <= getNumQuestions(); local.questionNumber++) {
-			askQuestion();
+			askQuestion(local.questionNumber);
 			showScore();
 			if (local.questionNumber < getNumQuestions()) {
 				print.line("Press any key for the next question").toConsole();
@@ -31,12 +28,18 @@ component accessors="true" {
 		}
 	}
 
-	private void function askQuestion() {
+	private void function askQuestion(required numeric questionNumber) {
 		local.numbers = [randRange(0, 10), randRange(0, 10)];
 		local.answer = local.numbers.sum();
 		local.response = "";
+
+		shell.clearScreen();
+		print
+			.line("Question ##" & arguments.questionNumber)	
+			.line(getLargeText(local.numbers[1] & " + " & local.numbers[2] & " ="));
+
 		while (!isNumeric(local.response)) {
-			local.response = ask("What is " & local.numbers[1] & " + " & local.numbers[2] & "? ");
+			local.response = ask("Answer: ");
 			if (!isNumeric(local.response)) {
 				print.yellowLine("Sorry, that is not a number. Try again.");
 			}
@@ -50,7 +53,22 @@ component accessors="true" {
 	}
 
 	private void function showScore() {
-		print.aquaLine("Your score is " & getScore());
+		print
+			.aquaLine("Your score is")
+			.aquaLine(getLargeText(getScore()));
+	}
+
+	private string function getLargeText(required string text) {
+		try {
+			cfhttp(url="http://artii.herokuapp.com/make") {
+				cfhttpparam (type="url", name="text", value=arguments.text);
+			}
+			local.text = cfhttp.fileContent
+		} catch (any e) {
+			// Fall back to normal text if web service is not available
+			local.text = arguments.text;
+		}
+		return local.text;
 	}
 
 }
